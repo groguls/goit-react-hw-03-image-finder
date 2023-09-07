@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import { TbPhotoSearch } from 'react-icons/tb';
 import {
   Input,
   Label,
@@ -26,6 +27,7 @@ export class Searchbar extends Component {
       <StyledHeader>
         <SearchForm onSubmit={this.handleSubmit}>
           <SearchButton type="submit">
+            <TbPhotoSearch size={32} />
             <Label>Search</Label>
           </SearchButton>
 
