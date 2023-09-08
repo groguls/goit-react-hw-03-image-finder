@@ -4,8 +4,8 @@ import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
 import { fetchImages } from './pixabayService';
-import { ThreeDots } from 'react-loader-spinner';
 import toast, { Toaster } from 'react-hot-toast';
+import { Loader } from './Loader/Loader';
 
 export class App extends Component {
   state = {
@@ -14,25 +14,23 @@ export class App extends Component {
     page: null,
     loading: false,
     isMore: false,
+    randomId: '',
   };
 
   componentDidUpdate = async (prevProps, prevState) => {
-    const { query, page } = this.state;
-    const normalizedQuery = query.split('/').pop();
+    const { query, page, randomId } = this.state;
 
-    if (normalizedQuery === '') {
-      toast('Please check your search query', {
-        icon: '🔎',
-      });
-      return;
-    }
-
-    if (prevState.query !== query || prevState.page !== page) {
+    if (
+      prevState.query !== query ||
+      prevState.page !== page ||
+      prevState.randomId !== randomId
+    ) {
       try {
         this.setState({ loading: true, error: false, isMore: false });
-        const images = await fetchImages(normalizedQuery, page);
+        const images = await fetchImages(query, page);
         const totalImgs = images.totalHits;
         const totalPages = totalImgs / 12;
+        const isMore = page < Math.ceil(totalPages);
 
         if (totalImgs <= 0) {
           toast(
@@ -44,24 +42,15 @@ export class App extends Component {
           return;
         }
 
-        prevState.query !== query
-          ? this.setState({
-              images: images.hits,
-            })
-          : this.setState(prevState => ({
-              images: [...prevState.images, ...images.hits],
-            }));
+        this.setState(prevState => ({
+          images: [...prevState.images, ...images.hits],
+          isMore,
+        }));
 
-        if (page >= Math.ceil(totalPages)) {
+        if (!isMore) {
           toast("We're sorry, but you've reached the end of search results.", {
             icon: '🔎',
           });
-          this.setState({ isMore: false });
-          return;
-        }
-
-        if (totalPages > 1) {
-          this.setState({ isMore: true });
         }
       } catch (error) {
         this.onError();
@@ -75,9 +64,8 @@ export class App extends Component {
     }
   };
 
-  onSearch = value => {
-    const query = `${Date.now()}/${value.trim()}`;
-    this.setState({ query, page: 1 });
+  onSearch = query => {
+    this.setState({ query, page: 1, images: [], randomId: Date.now() });
   };
 
   onLoadMore = () => {
@@ -109,18 +97,7 @@ export class App extends Component {
 
           {images.length > 0 && <ImageGallery images={images} />}
         </Gallery>
-        {loading && (
-          <ThreeDots
-            height="80"
-            width="80"
-            radius="9"
-            color="#3f51b5"
-            ariaLabel="three-dots-loading"
-            wrapperStyle={{ justifyContent: 'center' }}
-            wrapperClassName=""
-            visible={true}
-          />
-        )}
+        {loading && <Loader />}
         {isMore && <Button onLoadMore={this.onLoadMore} />}
       </PageWrapper>
     );

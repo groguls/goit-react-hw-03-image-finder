@@ -7,6 +7,7 @@ import {
   SearchForm,
   StyledHeader,
 } from './Searchbar.styled';
+import toast from 'react-hot-toast';
 
 export class Searchbar extends Component {
   state = {
@@ -19,8 +20,14 @@ export class Searchbar extends Component {
 
   handleSubmit = evt => {
     evt.preventDefault();
-    this.props.onSubmit(this.state.inputValue);
-    this.setState({ inputValue: '' });
+    const { inputValue } = this.state;
+    if (inputValue === '') {
+      toast('Please check your search query', {
+        icon: '🔎',
+      });
+      return;
+    }
+    this.props.onSubmit(inputValue);
   };
 
   render() {
