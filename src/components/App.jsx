@@ -12,18 +12,28 @@ export class App extends Component {
     images: [],
     query: '',
     page: null,
-    error: false,
     loading: false,
     isMore: false,
   };
 
   componentDidUpdate = async (prevProps, prevState) => {
     const { query, page } = this.state;
+    const prevQuery = prevState.query.split('/').pop();
+    const normalizedQuery = query.split('/').pop();
+    console.log(normalizedQuery);
+    console.log(prevQuery);
+
+    if (normalizedQuery === '') {
+      toast('Please check your search query', {
+        icon: '🔎',
+      });
+      return;
+    }
+
     if (prevState.query !== query || prevState.page !== page) {
       try {
         this.setState({ loading: true, error: false, isMore: false });
-        const images = await fetchImages(query, page);
-        console.log(images);
+        const images = await fetchImages(normalizedQuery, page);
         const totalImgs = images.totalHits;
         const totalPages = totalImgs / 12;
 
@@ -37,34 +47,39 @@ export class App extends Component {
           return;
         }
 
-        this.setState(prevState => ({
-          images: [...prevState.images, ...images.hits],
-        }));
-
-        if (totalPages > 1) {
-          this.setState({ isMore: true });
-        }
-
-        // if (page > 1) {
-        //   this.smoothScrolling();
-        // }
+        prevState.query !== query
+          ? this.setState({
+              images: images.hits,
+            })
+          : this.setState(prevState => ({
+              images: [...prevState.images, ...images.hits],
+            }));
 
         if (page >= Math.ceil(totalPages)) {
           toast("We're sorry, but you've reached the end of search results.", {
             icon: '🔎',
           });
+          this.setState({ isMore: false });
           return;
         }
+
+        if (totalPages > 1) {
+          this.setState({ isMore: true });
+        }
       } catch (error) {
-        // this.setState({ error: true });
         this.onError();
       } finally {
         this.setState({ loading: false });
       }
     }
+
+    if (page > 1) {
+      this.smoothScrolling();
+    }
   };
 
-  onSearch = query => {
+  onSearch = value => {
+    const query = `${Date.now()}/${value.trim()}`;
     this.setState({ query, page: 1 });
   };
 
@@ -72,29 +87,17 @@ export class App extends Component {
     this.setState(prevState => ({ page: prevState.page + 1 }));
   };
 
-  // onLargeImage = evt => {
-  //   console.log(evt);
-  //   this.setState({ largeImage: evt.target.src, isModalOpen: true });
-  // };
-
   onError = () =>
     toast.error('Oops! Something went wrong! Try reloading the page!');
 
   smoothScrolling = () => {
-    // const { height: cardHeight } = document
-    //   .querySelector('ul')
-    //   .firstElementChild.getBoundingClientRect();
+    const { height: cardHeight } = document
+      .querySelector('li')
+      .firstElementChild.getBoundingClientRect();
 
-    // console.log(cardHeight);
-
-    // window.scrollBy({
-    //   top: cardHeight * 2,
-    //   behavior: 'smooth',
-    // });
-
-    document.querySelector('ul').scrollIntoView({
+    window.scrollBy({
+      top: cardHeight * 2,
       behavior: 'smooth',
-      block: 'end',
     });
   };
 
