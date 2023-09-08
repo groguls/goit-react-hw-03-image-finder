@@ -18,10 +18,7 @@ export class App extends Component {
 
   componentDidUpdate = async (prevProps, prevState) => {
     const { query, page } = this.state;
-    const prevQuery = prevState.query.split('/').pop();
     const normalizedQuery = query.split('/').pop();
-    console.log(normalizedQuery);
-    console.log(prevQuery);
 
     if (normalizedQuery === '') {
       toast('Please check your search query', {
